@@ -38,7 +38,12 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        positions = torch.tensor([i for i in range(max_len)], dtype=torch.float32)
+        exponents = torch.tensor([10000**(-2*i/embed_dim) for i in range(embed_dim//2)], dtype=torch.float32)
+        half_embedding = torch.outer(exponents, positions)
+        for i in range(embed_dim//2):
+            pe[0, :, 2 * i] = torch.sin(half_embedding[i])
+            pe[0, :, 2 * i + 1] = torch.cos(half_embedding[i])
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -48,7 +53,7 @@ class PositionalEncoding(nn.Module):
         # Make sure the positional encodings will be saved with the model
         # parameters (mostly for completeness).
         self.register_buffer('pe', pe)
-
+  
     def forward(self, x):
         """
         Element-wise add positional embeddings to the input sequence.
@@ -70,7 +75,8 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        output = x + self.pe[:, :S, :D]
+        self.dropout(output)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
