@@ -184,7 +184,7 @@ def ls_discriminator_loss(scores_real, scores_fake):
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    loss = (torch.mean((scores_real - 1)**2) + torch.mean(scores_fake**2))/2
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
@@ -202,7 +202,7 @@ def ls_generator_loss(scores_fake):
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    loss = torch.mean((scores_fake - 1)**2)/2
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
@@ -220,7 +220,19 @@ def build_dc_classifier(batch_size):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    model = nn.Sequential(
+        nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, stride=1),
+        nn.LeakyReLU(negative_slope=0.01),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=1),
+        nn.LeakyReLU(negative_slope=0.01),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+        Flatten(),
+        nn.Linear(1024, 1024),
+        nn.LeakyReLU(negative_slope=0.01),
+        nn.Linear(1024, 1)
+    )
+    return model
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -241,7 +253,23 @@ def build_dc_generator(noise_dim=NOISE_DIM):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    model = nn.Sequential(
+        nn.Linear(noise_dim, 1024),
+        nn.ReLU(),
+        nn.BatchNorm1d(1024),
+        nn.Linear(1024, 7*7*128),
+        nn.ReLU(),
+        nn.BatchNorm1d(7*7*128),
+        Unflatten(C=128, H=7, W=7),
+        nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(64),
+        nn.ConvTranspose2d(in_channels=64, out_channels=1, kernel_size=4, stride=2, padding=1),
+        nn.Tanh(),
+        Flatten()
+    )
+
+    return model
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
