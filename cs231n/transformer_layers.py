@@ -147,6 +147,9 @@ class MultiHeadAttention(nn.Module):
         """
         N, S, E = query.shape
         N, T, E = value.shape
+
+        # ensure value and key are of same shape
+        assert(value.shape == key.shape)
         # Create a placeholder, to be overwritten by your code below.
         output = torch.empty((N, S, E))
         ############################################################################
@@ -165,7 +168,38 @@ class MultiHeadAttention(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        k = self.key(key) # N, T, E
+        q = self.query(query) # N, S, E
+        v = self.value(value) # N, T, E
+        
+        # 1) You'll want to split your shape from (N, T, E) into (N, T, H, E/H)
+        # where H is the number of heads.
+        q = q.view(N, S, self.n_head, E//self.n_head).transpose(1, 2) # (N, nh, S, E//nh)
+        k = k.view(N, T, self.n_head, E//self.n_head).transpose(1, 2) # (N, nh, T, E//nh)
+        v = v.view(N, T, self.n_head, E//self.n_head).transpose(1, 2) # (N, nh, T, E//nh)
+
+        # Multiply key and query attention scores corresponding to attention heads
+        #   For every query in source, we need T to compute softmax over the target tokens
+        # Apply the weight scale also
+        # N, nh, S, E//h @ N, nh, E//h, T -> N, nh, S, T
+        attention = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(q.shape[-1]))
+
+        if attn_mask is not None:
+          attention = attention.masked_fill(attn_mask == 0, -torch.inf)
+
+        attention = F.softmax(attention, dim=-1)
+
+        attention = self.attn_drop(attention)
+
+        # N, nh, S, T @ N, nh, T, E // h -> N, nh, S, E // h
+        output = attention @ v
+
+        # reshape the output to combine all the attention heads
+        # N, S, E
+        output = output.transpose(1, 2).contiguous().view(N, S, E)
+
+        # Apply projection
+        output = self.proj(output)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
