@@ -83,6 +83,13 @@ class CaptioningSolver(object):
         - num_epochs: The number of epochs to run for during training.
         - print_every: Integer; training losses will be printed every print_every
           iterations.
+        - lr_decay: A scalar for learning rate decay; after each epoch the learning
+          rate is multiplied by this value.
+        - batch_size: Size of minibatches used to compute loss and gradient during
+          training.
+        - num_epochs: The number of epochs to run for during training.
+        - print_every: Integer; training losses will be printed every print_every
+          iterations.
         - verbose: Boolean; if set to false then no output will be printed during
           training.
         """
