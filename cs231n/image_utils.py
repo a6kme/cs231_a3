@@ -7,7 +7,6 @@ from imageio import imread
 from PIL import Image
 
 
-
 def blur_image(X):
     """
     A very gentle image blurring operation, to be used as a regularizer for
@@ -70,6 +69,11 @@ def image_from_url(url):
         print("HTTP Error: ", e.code, url)
 
 
+def save_image(filename, img):
+    img = Image.fromarray(img)
+    img.save(filename)
+
+
 def load_image(filename, size=None):
     """Load and resize an image from disk.
 
@@ -87,3 +91,13 @@ def load_image(filename, size=None):
         # change the resampling method to BILINEAR to match the torch implementation
         img = np.array(Image.fromarray(img).resize(new_shape, resample=Image.NEAREST))
     return img
+
+
+def load_image_gray(filename, size=None):
+    img = imread(filename, as_gray=True)
+    if size is not None:
+        orig_shape = np.array(img.shape[:2])
+        min_idx = np.argmin(orig_shape)
+        scale_factor = float(size) / orig_shape[min_idx]
+        new_shape = (orig_shape * scale_factor).astype(int)
+        
